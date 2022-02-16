@@ -1,0 +1,37 @@
+openapi: "3.0.0"
+info:
+  title: Service Base Api
+  version: "1.0.0"
+  description: This service base allow you to build easily a rest api with swagger documentation
+  contact:
+    name: Adan Escobar
+    email: aescobar@codeits.cl
+    url: https://www.linkedin.com/in/aescobar-ing-civil-computacion/
+servers:
+  - url: /test/api/v1
+
+# Paths supported by the server application
+paths:
+  /echo/{str_in}:
+    get:
+      operationId: "services.test.EchoFacade.EchoFacade.echo"
+      tags:
+      - "TEST"
+      summary: "echo test"
+      description: "echo test"
+      parameters:
+        - name: str_in
+          in: path
+          description: any text
+          required: true
+          schema:
+            type: string
+
+      responses:
+        200:
+          description: "Receive Data Ok"
+        400:
+          description: "Error Format Data"
+        500:
+          description: "Internal server error"
+  
