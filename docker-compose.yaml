@@ -12,7 +12,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
       args:
         BRANCH_UTIL_LIB: master
         #BRANCH_UTIL_MODEL: master
