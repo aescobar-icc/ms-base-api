@@ -8,7 +8,7 @@ class UtilMongoEngine:
 			raise Exception("params must be a dict")
 
 		p = {
-			"limit":50,"skip":0,"page":0,
+			"limit":50,"offset":0,"page":1,
 			"query":{},
 			#"sort":[],
 			"pipeline":[]
@@ -19,8 +19,8 @@ class UtilMongoEngine:
 
 		if not isinstance(p['limit'],int) :
 			raise Exception("params['limit'] must be an int")
-		if not isinstance(p['skip'],int) :
-			raise Exception("params['skip'] must be an int")
+		if not isinstance(p['offset'],int) :
+			raise Exception("params['offset'] must be an int")
 		if not isinstance(p['page'],int) :
 			raise Exception("params['page'] must be an int")
 		if not isinstance(p['query'],dict) :
@@ -30,9 +30,9 @@ class UtilMongoEngine:
 		#check max items per page
 		if p['limit'] > 100:
 			p['limit'] = 100
-		#page override skip
+		#page override offset
 		if p['page'] > 0:
-			p['skip'] = (p['page'] -1) * p['limit']
+			p['offset'] = (p['page'] -1) * p['limit']
 
 		query = {}
 		for k in p['query']:
@@ -55,7 +55,7 @@ class UtilMongoEngine:
 			#UtilLog.debug(p['pipeline'])
 			return list( model.objects().aggregate(p['pipeline']) )
 		else:
-			queryset = model.objects[p['skip']:p['skip']+p['limit']]
+			queryset = model.objects[p['offset']:p['offset']+p['limit']]
 
 			if 'query_raw' in p :
 				queryset = queryset(__raw__= p['query_raw'])
@@ -78,17 +78,30 @@ class UtilMongoEngine:
 			count = model.objects(__raw__= p['query_raw']).count()
 		else:
 			count = model.objects(**p['query']).count()
-		max_page = int(count/p['limit'])
+		max_page = int(count/p['limit']) + 1
 		if p['page'] > max_page :
 			p['page'] = max_page
 		return { 
-			"count":count,
-			"page":p['page'],
-			"page_max":max_page,
-			"skip":p['skip'],
+			"offset":p['offset'],
 			"limit":p['limit'],
-			"items":items
+			"page":p['page'],
+			"page_count":max_page,
+			"items":items,
+			"items_count":count,
 		}
+
+	@staticmethod
+	def create_or_update(model,**kwargs):
+		if 'id' not in kwargs: #create
+			print("Creating new %s:%s"%(model.__name__,kwargs))
+			m = model(**kwargs) # Role(name = role_dict['name'])
+			m.save()
+		else:
+			print("Updating  %s:%s"%(model.__name__,kwargs))
+			model.objects(id=kwargs['id']).update_one(**kwargs)
+			m = model.objects.get(id=kwargs['id'])
+			#signals.post_save.send(Role, document=role,created=True)
+		return m
 
 
 	

@@ -1,0 +1,3 @@
+
+class ServiceAuth:
+	pass

@@ -4,14 +4,15 @@ from flask_graphql import GraphQLView
 
 from lib.server.ServerApi import ServerApi
 from lib.db.mongo.connection import MongoConnection
-from models.schema import schema
+import schema
 
 app = ServerApi.init()
 MongoConnection.connect(app)
 
+#enable GraphiQL
 app.add_url_rule(
     '/graphql',
-    view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True)
+    view_func=GraphQLView.as_view('graphql', schema=schema.schema, graphiql=True)
 )
 	
 @app.before_request

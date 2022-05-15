@@ -48,7 +48,6 @@ class Employee(Document):
 	role = ReferenceField(Role)
 	roleSummary = EmbeddedDocumentField(RoleSummary)
 
-
 	@staticmethod
 	def all_employees(params):
 		# filter=None

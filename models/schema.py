@@ -48,11 +48,13 @@ class Query(graphene.ObjectType):
 	# all_role = MongoengineConnectionField(Role)
 	role = graphene.Field(Role)
 
-	def resolve_all_employees(self, info,**kwargs):
+	def resolve_all_employees(parent, info,**kwargs):
 		# We can easily optimize query count in the resolve method
 		# user = info.context.user
 		# if not user.is_authenticated:
 		# 	raise Exception('You must be logged in')
+
+		print("all_employees parent: %s"%parent)
 		
 		if 'search' in kwargs:
 			kwargs['query'] = {
@@ -68,7 +70,7 @@ class Query(graphene.ObjectType):
 class Mutations(graphene.ObjectType):
 	update_role = UpdateRole.Field()
 
-schema = graphene.Schema(query=Query, types=[Department, Employee, Role], mutation=Mutations)
+#schema = graphene.Schema(query=Query, types=[Department, Employee, Role], mutation=Mutations)
 
 
 
