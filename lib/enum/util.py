@@ -27,3 +27,4 @@ class UtilEnum:
 		for key,value in values.items():
 			if not UtilEnum.has_value(e,value):
 				raise Exception("%s='%s' is not present in enum %s with values=%s "%(key,value,e.__name__,UtilEnum.values(e)))
+	

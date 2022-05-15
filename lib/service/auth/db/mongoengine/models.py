@@ -81,8 +81,15 @@ class Account(AccountBase,Document):
 	def pre_save(sender, document):
 		print("[debug] Account.pre_save")
 		#validate account type
-		UtilEnum.validate(ACCOUNT_TYPE,{"Account.type":document.type})
+		
+		#UtilEnum.validate(ACCOUNT_TYPE,{"Account.type":document.type})
+
+		if document.id is not None:
+			document.type =	Account.objects.get(id=document.id).type
+
 		enum = UtilEnum.get_by_value(ACCOUNT_TYPE,document.type)
+		if enum is None:
+			raise Exception("Account.type='%s' is not present in enum %s with values=%s "%(document.type,UtilEnum.values(ACCOUNT_TYPE)))
 
 		#validate account parent
 		if enum.need_parent() and not document.accountParent:
