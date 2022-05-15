@@ -1,5 +1,5 @@
 from mongoengine.base import (
-    BaseDocument,
+	BaseDocument,
 )
 from mongoengine import Document,EmbeddedDocument
 from mongoengine.fields import (
@@ -66,7 +66,25 @@ UtilMongoEngine.create_init(AccountSummary)
 class Account(AccountBase,Document):
 	name		= StringField(unique = True)
 	accountParent = ReferenceField('Account')
-	accountParentSummary = EmbeddedDocumentField(AccountSummary)
+	_accountParentSummary = EmbeddedDocumentField(AccountSummary,db_field="accountParentSummary")
+
+	def get_accountParentSummary(self):
+		print("getter method called")
+		return self._accountParentSummary
+	
+	# function to set value of _age
+	def set_accountParentSummary(self, value):
+		print("setter method called")
+		if value is None or isinstance(value, AccountSummary):
+			self._accountParentSummary = value
+		elif isinstance(value, Account):
+			self._accountParentSummary = AccountSummary(**UtilMongoEngine.to_dict(value))
+		elif isinstance(value, dict):
+			self._accountParentSummary = AccountSummary(**value)
+		else:
+			self._accountParentSummary = None
+	
+	accountParentSummary = property(get_accountParentSummary, set_accountParentSummary,) 
 	
 	meta = {
 		'strict': False,
@@ -85,7 +103,9 @@ class Account(AccountBase,Document):
 		#UtilEnum.validate(ACCOUNT_TYPE,{"Account.type":document.type})
 
 		if document.id is not None:
-			document.type =	Account.objects.get(id=document.id).type
+			bd_doc = Account.objects.get(id=document.id)
+			document.type 			=	bd_doc.type
+			document.accountParent	=	bd_doc.accountParent
 
 		enum = UtilEnum.get_by_value(ACCOUNT_TYPE,document.type)
 		if enum is None:
@@ -93,22 +113,27 @@ class Account(AccountBase,Document):
 
 		#validate account parent
 		if enum.need_parent() and not document.accountParent:
-
 			raise Exception("Account.accountParent is required")
 
-		#print("accountParent1:",document.accountParent)
-		#parent = Account.objects.get(id=document.accountParent.id)
 		print("[debug] accountParent2:",document.accountParent)
-		#document.accountParentSummary = AccountSummary(UtilMongoEngine.adapt_kwargs(AccountSummary,**document.accountParent.to_mongo()))
-		sumDict = UtilMongoEngine.to_dict(document.accountParent)
-
-		print("[debug] sumDict:",sumDict)
-		document.accountParentSummary = AccountSummary(**sumDict)
+		#it is safe set accountParentSummary with accountParent because accountParentSummary is a property that process de value before assign
+		document.accountParentSummary = document.accountParent
 		# if document.accountParent.type.type not in document.type.can_create:
 		# 	raise Exception("Account.type can not be created by Account.accountParent.type")
 
+	@staticmethod
+	def post_save(sender, document,created):
+		#UtilLog.debug("sender:%s, document:%s"%(sender,document))
+		all_account_childs = Account.objects(accountParent=document)
+		
+		#update sumary info of all account childs
+		for e in all_account_childs:
+			e.accountParentSummary = AccountSummary(**UtilMongoEngine.to_dict(document))
+			e.save()
+
 
 signals.pre_save.connect(Account.pre_save, sender=Account)
+signals.post_save.connect(Account.post_save, sender=Account)
 
 # -------------------------------------------
 # user

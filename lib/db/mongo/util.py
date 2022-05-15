@@ -174,6 +174,8 @@ class UtilMongoEngine:
 
 	@staticmethod
 	def to_dict(instance):
+		if instance is None:
+			return None
 		val = instance.to_mongo().to_dict()
 		if '_id' in val:
 			val['id'] = str(val['_id'])
