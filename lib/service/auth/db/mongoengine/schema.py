@@ -7,15 +7,23 @@ from lib.db.mongo.util import UtilMongoEngine
 
 
 from lib.db.graphene.util import PaginableType,UtilGraphene
-from lib.service.auth.db.mongoengine.models import Account as AccountModel, User as UserModel
+from lib.service.auth.db.mongoengine.models import Account as AccountModel,AccountSummary as AccountSummaryModel, User as UserModel
 
 ###############################################################################
 # Account
 ###############################################################################
 # -- model map
+class AccountSummayType(MongoengineObjectType):
+	class Meta:
+		model = AccountSummaryModel
 class AccountType(MongoengineObjectType):
 	class Meta:
 		model = AccountModel
+	accountParentSummary = graphene.Field(lambda: AccountSummayType)
+
+	def resolve_accountParentSummary(parent, info):
+		return parent.accountParentSummary
+
 # -- model pagination
 class AccountPaginableType(PaginableType):
 	items = graphene.List(AccountType,source="items")
@@ -24,11 +32,13 @@ class AccountCreateUpdate(graphene.Mutation):
 	class Arguments:
 		id = graphene.String()
 		name = graphene.String()
-		#accounts = graphene.List(graphene.String())
+		type = graphene.String()
+		accountParent = graphene.String()
 
 	account = graphene.Field(lambda: AccountType)
 
 	def mutate(root, info, **kwargs):
+		print("[debug] AccountCreateUpdate kwargs: %s"%kwargs)
 		account = UtilMongoEngine.create_or_update(AccountModel,**kwargs)
 		return AccountCreateUpdate(account=account)
 

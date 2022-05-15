@@ -1,3 +1,5 @@
+import inspect
+from datetime import datetime
 from unittest import result
 from lib.log.UtilLog import UtilLog
 
@@ -89,19 +91,92 @@ class UtilMongoEngine:
 			"items":items,
 			"items_count":count,
 		}
-
+	@staticmethod
+	def signal_caller(signal_name,model,instance,**kwargs):
+		print("[debug] trying to call signal_caller:%s.%s "%(model.__name__,signal_name))
+		if hasattr(model, signal_name) :
+			signal = getattr(model, signal_name)
+			if inspect.isfunction(signal):
+				signal(model,instance,**kwargs)
+			else:
+				UtilLog.warning("signal:%s.%s is not a function"%(model.__name__,signal_name))
+		else:
+			print("[debug] signal_caller:%s.%s not found"%(model.__name__,signal_name))
 	@staticmethod
 	def create_or_update(model,**kwargs):
+			
 		if 'id' not in kwargs: #create
 			print("Creating new %s:%s"%(model.__name__,kwargs))
 			m = model(**kwargs) # Role(name = role_dict['name'])
+			#UtilMongoEngine.signal_caller('pre_save',model,m)
 			m.save()
 		else:
 			print("Updating  %s:%s"%(model.__name__,kwargs))
-			model.objects(id=kwargs['id']).update_one(**kwargs)
 			m = model.objects.get(id=kwargs['id'])
+			UtilMongoEngine.update_with_kwargs(m,**kwargs)
+			#UtilMongoEngine.signal_caller('pre_save',model,m)
+			m.save()
+			# print("Updating  %s:%s"%(model.__name__,kwargs))
+			# model.objects(id=kwargs['id']).update_one(**kwargs)
+			# m = model.objects.get(id=kwargs['id'])
 			#signals.post_save.send(Role, document=role,created=True)
 		return m
 
+	@staticmethod
+	def update_with_kwargs(instance,**kwargs):
+		ModelClass = instance.__class__
+		fields = ModelClass.__dict__['_fields']
+		for name in fields:
+			if name in kwargs:
+				if type(fields[name]).__name__ == 'ReferenceField': #and isinstance(instance[name],str):
+					print(fields[name].__dict__)
+					if isinstance(kwargs[name],str):
+						reference_type = fields[name].__dict__['document_type_obj']
+						print("[debug] getting reference:%s"%(kwargs[name]))
+						kwargs[name] = reference_type.objects.get(id=kwargs[name])  # get ref from id
+				instance[name] = kwargs[name]
+		if 'id' in kwargs:
+			if "update_at" in fields:
+				instance["update_at"] = datetime.now()
+		else:
+			if "create_at" in fields:
+				instance["create_at"] = datetime.now()
 
+	@staticmethod
+	def adapt_kwargs(ModelClass,obj):
+		new_kwargs = {}
+		fields = ModelClass.__dict__['_fields']
+		for name in fields:
+			if name in obj:
+				new_kwargs[name] = obj[name]
+		if 'id' in obj:
+			if "update_at" in fields:
+				obj["update_at"] = datetime.now()
+		else:
+			if "create_at" in fields:
+				obj["create_at"] = datetime.now()
+		return new_kwargs
+	@staticmethod
+	def create_init(ModelClass):
+		"""Create dynamically a construnctor for mongoengine Model that allows 
+		initializate a class from any dict that has more than attrs that defined by model
+
+			Parameters:
+			ModelClass (class): the model class that you want to initialize
+
+			Returns:
+			void:Returning nothing
+		"""
+
+		def __init__(self, *args, **kwargs):
+			super(ModelClass, self).__init__(*args, **(UtilMongoEngine.adapt_kwargs(ModelClass,kwargs)))
+		ModelClass.__init__ = __init__
+
+	@staticmethod
+	def to_dict(instance):
+		val = instance.to_mongo().to_dict()
+		if '_id' in val:
+			val['id'] = str(val['_id'])
+			del val['_id']
+		return val
 	

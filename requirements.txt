@@ -12,7 +12,10 @@ Flask-Cors==3.0.10
 Flask-GraphQL==2.0.1
 flask-mongoengine==1.0.0
 Flask-WTF==1.0.0
-graphene-mongo
+#graphql-server==3.0.0b5
+#graphql-core==3.2.1
+#graphene==3.0b7
+graphene-mongo==0.2.13
 greenlet==1.1.2
 gunicorn==20.1.0
 idna==3.3
