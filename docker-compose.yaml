@@ -15,7 +15,8 @@ services:
       dockerfile: dockerfile
       args:
         BRANCH_UTIL_LIB: master
-        #BRANCH_UTIL_MODEL: master
+        BRANCH_UTIL_MODEL: master
+        DB_TEST: mongodb+srv://aescobar:Tks12345@cluster0.iz5q7.mongodb.net/test
     env_file: .env
     volumes:
       - .:/api-run

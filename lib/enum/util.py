@@ -15,6 +15,7 @@ class UtilEnum:
 		for k,v in all.items():
 			if v.value == value:
 				return v
+		print("[debug] => res:None check if %s in %s "%(value,all))
 		return None
 	
 	@staticmethod

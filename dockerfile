@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r /api-run/requirements.txt
 #RUN ash /api-run/sh/install_libs.sh
 
 #RUN apk del .build-deps
+RUN bash /api-run/test/run.sh
 
 
 ENTRYPOINT gunicorn --conf /api-run/server_conf.py server:app --reload
