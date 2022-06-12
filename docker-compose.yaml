@@ -6,7 +6,7 @@ networks:
       config:
         - subnet: 172.20.7.0/24
 services:
-  ms-base:
+  ms-base-api:
     image: aescobaricc/ms-base-api:0.0.1
     container_name: ms-base-api
     restart: always
@@ -16,7 +16,7 @@ services:
       args:
         BRANCH_UTIL_LIB: master
         BRANCH_UTIL_MODEL: master
-        DB_TEST: mongodb+srv://aescobar:Tks12345@cluster0.iz5q7.mongodb.net/test
+        DB_TEST: "mongodb+srv://aescobar:Tks12345@cluster0.iz5q7.mongodb.net/test"
     env_file: .env
     volumes:
       - .:/api-run
