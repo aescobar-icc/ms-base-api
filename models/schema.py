@@ -2,8 +2,9 @@ import graphene
 #from graphene.relay import Node
 from graphene_mongo import MongoengineConnectionField, MongoengineObjectType
 
+import lib.db.graphene.types as t
 
-from lib.db.graphene.util import PaginableType,UtilGraphene
+from lib.db.graphene.util import UtilGraphene
 from models.models import Department as DepartmentModel
 from models.models  import Employee as EmployeeModel
 from models.models  import Role as RoleModel
@@ -36,7 +37,7 @@ class Employee(MongoengineObjectType):
 		model = EmployeeModel
 		#interfaces = (Node,)
 
-class PaginableEmployeeType(PaginableType):
+class PaginableEmployeeType(t.PaginableType):
 	items = graphene.List(Employee,source="items")
 
 class Query(graphene.ObjectType):
@@ -61,12 +62,7 @@ class Query(graphene.ObjectType):
 				"name":kwargs['search']
 			}
 
-
-
 		return UtilGraphene.as_paginable(EmployeeModel.all_employees(kwargs))
-
-
-
 class Mutations(graphene.ObjectType):
 	update_role = UpdateRole.Field()
 

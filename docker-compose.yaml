@@ -7,7 +7,7 @@ networks:
         - subnet: 172.20.7.0/24
 services:
   ms-base-api:
-    image: aescobaricc/ms-base-api:0.0.1
+    image: aescobaricc/ms-base-api:0.0.2
     container_name: ms-base-api
     restart: always
     build:

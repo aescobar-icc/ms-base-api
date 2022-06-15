@@ -5,8 +5,8 @@ from graphene_mongo import MongoengineConnectionField, MongoengineObjectType
 from lib.log.UtilLog import UtilLog
 from lib.db.mongo.util import UtilMongoEngine
 
-
-from lib.db.graphene.util import PaginableType,UtilGraphene
+import  lib.db.graphene.types as t
+from lib.db.graphene.util import UtilGraphene
 from lib.service.auth.db.mongoengine.models import Account as AccountModel,AccountSummary as AccountSummaryModel, User as UserModel
 
 ###############################################################################
@@ -25,7 +25,7 @@ class AccountType(MongoengineObjectType):
 		return parent.accountParentSummary
 
 # -- model pagination
-class AccountPaginableType(PaginableType):
+class AccountPaginableType(t.PaginableType):
 	items = graphene.List(AccountType,source="items")
 # -- mutation
 class AccountCreateUpdate(graphene.Mutation):
@@ -50,7 +50,7 @@ class UserType(MongoengineObjectType):
 	class Meta:
 		model = UserModel
 # -- model pagination
-class UserPaginableType(PaginableType):
+class UserPaginableType(t.PaginableType):
 	items = graphene.List(UserType,source="items")
 
 # -- mutation

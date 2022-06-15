@@ -14,9 +14,11 @@ Flask==1.1.4
 Flask-Cors==3.0.10
 Flask-GraphQL==2.0.1
 flask-mongoengine==1.0.0
+Flask-SQLAlchemy==2.5.1
 Flask-WTF==1.0.0
 graphene==2.1.9
 graphene-mongo==0.2.13
+graphene-sqlalchemy==2.3.0
 graphql-core==2.3.2
 graphql-relay==2.0.1
 graphql-server-core==1.2.0
@@ -38,6 +40,7 @@ packaging==21.3
 pika==1.2.0
 pluggy==1.0.0
 promise==2.3
+psycopg2-binary==2.9.3
 py==1.11.0
 pymongo==4.0
 pyparsing==3.0.9
@@ -49,6 +52,7 @@ requests==2.27.1
 Rx==1.6.1
 singledispatch==3.7.0
 six==1.16.0
+SQLAlchemy==1.4.37
 swagger-ui-bundle==0.0.9
 tomli==2.0.1
 urllib3==1.26.8
