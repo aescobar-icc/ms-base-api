@@ -1,4 +1,4 @@
-from operator import or_,and_
+from sqlalchemy import or_,and_
 import time
 import  sqlalchemy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -31,7 +31,8 @@ class RelationshipInspector:
 		#dir(relation)
 class ModelInspector:
 	logic_operators = {"and":and_,"or":or_}
-	comparison_operators = {"eq":"__eq__", "lte":"__le__", "lt":"__lt__", "gte":"__ge__", "gt":"__gt__", "ne":"__ne__", "in":"in_", "nin":"not_in", "like":"like", "nlike":"not_like"}
+	comparison_operators = {"eq":"__eq__", "lte":"__le__", "lt":"__lt__", "gte":"__ge__", "gt":"__gt__", "ne":"__ne__", "in":"in_", "nin":"not_in", "like":"like", "nlike":"not_like","between":"between"}
+	comparison_is_multi = {"between":1}
 	model=None
 	columns={}
 	relationships={}
@@ -54,6 +55,10 @@ class ModelInspector:
 		res = name in self.relationships
 		UtilLog.debug("%s is rel: %s"%(name,res))
 		return res
+	def is_multi_arg(self,name:str) -> bool:
+		res = name in self.comparison_is_multi
+		UtilLog.debug("%s is multi arg: %s"%(name,res))
+		return res
 
 	def get_column(self,col_name:str):
 		if col_name in self.columns:
@@ -71,6 +76,7 @@ class ModelInspector:
 			comp	= self.comparison_operators[comp_name]
 			return getattr(col,comp)
 		raise Exception("Comparator %s not found"%comp_name)
+	
 
 	def get_expression(self,col_name:str,comp_name:str,value:any):
 		"""
@@ -80,7 +86,10 @@ class ModelInspector:
 
 		"""
 		comp	= self.get_column_comparator(col_name,comp_name)
-		exp		= comp(value)
+		if self.is_multi_arg(comp_name):
+			exp = comp(*value)
+		else:
+			exp	= comp(value)
 
 		return exp
 
@@ -110,20 +119,13 @@ class UtilSQLAlchemy:
 			for elem in value:
 				if not isinstance(elem,dict):
 					raise Exception("[resolve_logic_oper] Invalid %s:[..] operando:%s, must be dict"%(logic_func,elem))
-				#UtilSQLAlchemy.resolve_dict(str(logic_func),model_insp,elem,_clauses,_cols)
 				UtilSQLAlchemy.resolve_dict(str(logic_func),model_insp,elem,_clauses)
 				
 		elif isinstance(value,dict): # for example: logic_func=and   value={"name":"test","or":[{"status":"1"},{"name":"2"}]}
-			#UtilSQLAlchemy.resolve_dict(str(logic_func),model_insp,value,_clauses,_cols)
 			UtilSQLAlchemy.resolve_dict(str(logic_func),model_insp,value,_clauses)
 		else:
 			raise Exception("[resolve_logic_oper] Invalid %s:... operando:%s, must be list or dict"%(logic_func,value))
-		# print("_cols:",_cols)
-		# lc = len(_cols)
-		# if lc == 1:
-		# 	_clauses.append(_cols[0])
-		# elif lc > 1:
-		# 	_clauses.append(logic_func(*_cols))
+
 		UtilLog.warning("_clauses:%s"%_clauses)
 		if len(_clauses) == 1:
 			return _clauses[0]
