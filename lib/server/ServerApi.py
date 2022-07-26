@@ -46,6 +46,7 @@ class ServerApi:
 					UtilLog.info("%s successfully loaded!"%(api_yaml))
 				except Exception as e:
 					UtilLog.error("Error loading %s EXCEP:%s "%(api_yaml,e))
+					traceback.print_exc()
 					#raise e
 		else:
 			UtilLog.warning("no apis was found at: %s"%pattern)

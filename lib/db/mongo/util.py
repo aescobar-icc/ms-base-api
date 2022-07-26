@@ -3,6 +3,31 @@ from datetime import datetime
 from unittest import result
 from lib.log.UtilLog import UtilLog
 
+
+from json import JSONEncoder
+import types
+from bson import ObjectId
+from mongoengine.queryset import QuerySet
+from mongoengine import *
+
+
+class ModelEncoder(JSONEncoder):
+	def default(self,obj):
+		
+		if isinstance(obj, datetime):
+			return str(obj).replace(' ','T')+'Z'
+		if isinstance(obj, ObjectId):
+			return str(obj)
+		if isinstance(obj, QuerySet) or isinstance(obj, types.GeneratorType):
+			arr = []
+			for ob in obj:
+				#del ob['_id']
+				arr.append(ob)
+			return arr
+		if isinstance(obj, Document) or isinstance(obj, EmbeddedDocument):
+			return obj.to_mongo()
+
+		return JSONEncoder.default(self, obj)
 class UtilMongoEngine:
 	@staticmethod
 	def validate_params(params):
