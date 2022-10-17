@@ -114,7 +114,10 @@ class ServerApi:
 			trace = traceback.format_exc()
 			traceback.print_exc()
 			#sending error mail
-			UtilMail.sendError(request,'%s\n%s'%(str(error),trace))
+			try:
+				UtilMail.sendError(request,'%s\n%s'%(str(error),trace))
+			except:
+				UtilLog.warning("Error sending error mail")
 
 		resp = {'message':message, 'status':status_code}
 

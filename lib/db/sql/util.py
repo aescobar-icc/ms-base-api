@@ -1,7 +1,9 @@
+from importlib.machinery import all_suffixes
 from sqlalchemy import or_,and_
 import time
 import  sqlalchemy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy import insert
 
 from sqlalchemy.inspection import inspect
 
@@ -31,7 +33,7 @@ class RelationshipInspector:
 		#dir(relation)
 class ModelInspector:
 	logic_operators = {"and":and_,"or":or_}
-	comparison_operators = {"eq":"__eq__", "lte":"__le__", "lt":"__lt__", "gte":"__ge__", "gt":"__gt__", "ne":"__ne__", "in":"in_", "nin":"not_in", "like":"like", "nlike":"not_like","between":"between"}
+	comparison_operators = {"eq":"__eq__", "lte":"__le__", "lt":"__lt__", "gte":"__ge__", "gt":"__gt__", "ne":"__ne__", "in":"in_", "nin":"not_in","any":"any_", "like":"like","ilike":"ilike", "nlike":"not_like","between":"between"}
 	comparison_is_multi = {"between":1}
 	model=None
 	columns={}
@@ -40,11 +42,24 @@ class ModelInspector:
 	def __init__(self,model):
 		self.model=model
 		imodel = inspect(model)
+		column_names = []
 		for c in imodel.columns:
 			self.columns[c.key] = c
+			column_names.append(c.key)
 
 		for r in imodel.relationships:
 			self.relationships[r.key] = RelationshipInspector(r)
+
+		if not hasattr(model,"as_dict"):
+			#define model.as_dict()
+			def as_dict(self):
+				d = {}
+				for c in column_names:
+					d[c] = getattr(self,c)
+				return d
+
+			setattr(model,"as_dict",as_dict)
+			
 
 	def is_column(self,name:str) -> bool:
 		res = name in self.columns
@@ -160,6 +175,8 @@ class UtilSQLAlchemy:
 				#_cols.append(col)
 				_clauses.append(col)
 			elif model_insp.is_rel(key):
+				if isinstance(val,list):
+					raise Exception("[resolve_dict] list param for relationship: '%s' is not supported"%(key))
 				rel = model_insp.get_rel(key)
 				rel_insp = ModelInspector(rel.model)
 				_clauses.append(rel.primaryjoin)
@@ -236,14 +253,21 @@ class UtilSQLAlchemy:
 
 	
 	@staticmethod
-	def list(model,p={}):
+	def list(model,p={},as_dict=False):
 		""" return a list of objects according to the limit and offset, by default offset is 0 and limit is 100 """
 		queryset = UtilSQLAlchemy.query(model,p)
-		return queryset.all()
+		all = queryset.all()
+		return all if not as_dict else [ item.as_dict() for item in all ]
+
+	@staticmethod
+	def first(model,p={}):
+		""" return a list of objects according to the limit and offset, by default offset is 0 and limit is 100 """
+		queryset = UtilSQLAlchemy.query(model,p)
+		return queryset.first()
 
 	
 	@staticmethod
-	def list_all(model,p={}):
+	def list_all(model,p={},as_dict=False):
 		p = UtilSQLAlchemy.validate_params(model,p)
 		queryset = UtilSQLAlchemy.query(model,p,False,False)
 		count = queryset.count()
@@ -254,12 +278,15 @@ class UtilSQLAlchemy:
 			offset += limit
 			print("getting %s from %s"%(offset,count))
 			for item in query_chunk:
-				yield item
+				if as_dict:
+					yield item.as_dict()
+				else:
+					yield item
 			time.sleep(0.5)
 
 	
 	@staticmethod
-	def list_paginable(model,p={}):
+	def list_paginable(model,p={},as_dict=False):
 		""" 
 			return a dict with pagination info
 
@@ -299,7 +326,18 @@ class UtilSQLAlchemy:
 			"has_next":p['page'] < max_page,
 			"page":p['page'],
 			"page_count":max_page,
-			"items":items,
+			"items":items if not as_dict else [ item.as_dict() for item in items ],
 			"items_count":len(items),
 			"count":count,
 		}
+
+	@staticmethod
+	def insert(model,**kwargs):
+		# stmt = (
+		# 	insert(model).
+		# 	values(**kwargs)
+		# )
+		m =  model(**kwargs)
+		db.session.add(m)
+		db.session.commit()
+		return m
